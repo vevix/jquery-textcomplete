@@ -603,6 +603,7 @@ if (typeof jQuery === 'undefined') {
           break;
         case commands.KEY_ENTER:
           e.preventDefault();
+          e.stopPropagation();
           this._enter(e);
           break;
         case commands.KEY_PAGEUP:
@@ -819,44 +820,6 @@ if (typeof jQuery === 'undefined') {
     };
   };
 
-  function Strategy(options) {
-    $.extend(this, options);
-    if (this.cache) { this.search = memoize(this.search); }
-  }
-
-  Strategy.parse = function (strategiesArray, params) {
-    return $.map(strategiesArray, function (strategy) {
-      var strategyObj = new Strategy(strategy);
-      strategyObj.el = params.el;
-      strategyObj.$el = params.$el;
-      return strategyObj;
-    });
-  };
-
-  $.extend(Strategy.prototype, {
-    // Public properties
-    // -----------------
-
-    // Required
-    match:      null,
-    replace:    null,
-    search:     null,
-
-    // Optional
-    cache:      false,
-    context:    function () { return true; },
-    index:      2,
-    template:   function (obj) { return obj; },
-    idProperty: null
-  });
-
-  $.fn.textcomplete.Strategy = Strategy;
-
-}(jQuery);
-
-+function ($) {
-  'use strict';
-
   var now = Date.now || function () { return new Date().getTime(); };
 
   // Returns a function, that, as long as it continues to be invoked, will not
@@ -888,6 +851,46 @@ if (typeof jQuery === 'undefined') {
     };
   };
 
+  function Strategy(options) {
+    $.extend(this, options);
+    if (this.debounce) { this.search = debounce(this.search, this.debounce); }
+    if (this.cache) { this.search = memoize(this.search); }
+  }
+
+  Strategy.parse = function (strategiesArray, params) {
+    return $.map(strategiesArray, function (strategy) {
+      var strategyObj = new Strategy(strategy);
+      strategyObj.el = params.el;
+      strategyObj.$el = params.$el;
+      return strategyObj;
+    });
+  };
+
+  $.extend(Strategy.prototype, {
+    // Public properties
+    // -----------------
+
+    // Required
+    match:      null,
+    replace:    null,
+    search:     null,
+
+    // Optional
+    cache:      false,
+    context:    function () { return true; },
+    index:      2,
+    template:   function (obj) { return obj; },
+    idProperty: null,
+    debounce:   null
+  });
+
+  $.fn.textcomplete.Strategy = Strategy;
+
+}(jQuery);
+
++function ($) {
+  'use strict';
+
   function Adapter () {}
 
   $.extend(Adapter.prototype, {
@@ -909,10 +912,6 @@ if (typeof jQuery === 'undefined') {
       this.id        = completer.id + this.constructor.name;
       this.completer = completer;
       this.option    = option;
-
-      if (this.option.debounce) {
-        this._onKeyup = debounce(this._onKeyup, this.option.debounce);
-      }
 
       this._bindEvents();
     },

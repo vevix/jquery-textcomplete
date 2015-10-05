@@ -279,6 +279,7 @@
           break;
         case commands.KEY_ENTER:
           e.preventDefault();
+          e.stopPropagation();
           this._enter(e);
           break;
         case commands.KEY_PAGEUP:
